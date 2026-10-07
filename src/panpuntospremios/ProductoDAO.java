@@ -70,6 +70,54 @@ public class ProductoDAO {
         }
     }
 
+    public void actualizar(Producto producto) throws SQLException {
+        validarProducto(producto);
+        validarId(producto.getIdProducto());
+
+        String sql = "UPDATE productos SET nombre = ?, precio = ? "
+                + "WHERE id_producto = ?";
+
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setString(1, producto.getNombre().trim());
+            sentencia.setBigDecimal(2, producto.getPrecio());
+            sentencia.setLong(3, producto.getIdProducto());
+
+            if (sentencia.executeUpdate() != 1) {
+                throw new SQLException(
+                        "No se encontro el producto para actualizar."
+                );
+            }
+        }
+    }
+
+    public void cambiarEstado(long idProducto, boolean activo)
+            throws SQLException {
+
+        validarId(idProducto);
+
+        String sql = "UPDATE productos SET activo = ? "
+                + "WHERE id_producto = ?";
+
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setString(1, activo ? "S" : "N");
+            sentencia.setLong(2, idProducto);
+
+            if (sentencia.executeUpdate() != 1) {
+                throw new SQLException(
+                        "No se encontro el producto para cambiar su estado."
+                );
+            }
+        }
+    }
+
+    private void validarId(long idProducto) {
+        if (idProducto <= 0) {
+            throw new IllegalArgumentException(
+                    "Primero busca el producto."
+            );
+        }
+    }
+
     private void validarProducto(Producto producto) {
         if (producto == null) {
             throw new IllegalArgumentException(

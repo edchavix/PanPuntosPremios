@@ -37,8 +37,7 @@ public class Principal {
             Arrays.fill(clave, '\0');
             campoClave.setText("");
 
-            VentanaClientes ventana = new VentanaClientes(conexion);
-            ventana.setVisible(true);
+            mostrarMenu(conexion);
 
         } catch (SQLException error) {
             JOptionPane.showMessageDialog(
@@ -50,6 +49,31 @@ public class Principal {
         } finally {
             Arrays.fill(clave, '\0');
             campoClave.setText("");
+        }
+    }
+
+    private static void mostrarMenu(Connection conexion) {
+        String[] opciones = {"Clientes", "Productos", "Salir"};
+
+        while (true) {
+            int opcion = JOptionPane.showOptionDialog(
+                    null,
+                    "Selecciona el modulo que deseas abrir.",
+                    "Pan, Puntos y Premios",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]
+            );
+
+            if (opcion == 0) {
+                new VentanaClientes(conexion).setVisible(true);
+            } else if (opcion == 1) {
+                new VentanaProductos(conexion).setVisible(true);
+            } else {
+                return;
+            }
         }
     }
 }

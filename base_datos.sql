@@ -370,3 +370,13 @@ COMMIT;
 SELECT identificacion, nombre, puntos, activo
 FROM clientes
 WHERE identificacion = 'PRUEBA001';
+
+SELECT p.codigo,
+       p.nombre,
+       m.fecha_movimiento,
+       m.tipo,
+       m.cantidad
+FROM movimientos_inventario m
+JOIN productos p ON p.id_producto = m.id_producto
+WHERE p.codigo = 'BEB002'
+ORDER BY m.fecha_movimiento DESC, m.id_movimiento DESC;

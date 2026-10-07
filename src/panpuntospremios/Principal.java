@@ -53,7 +53,7 @@ public class Principal {
     }
 
     private static void mostrarMenu(Connection conexion) {
-        String[] opciones = {"Clientes", "Productos", "Salir"};
+        String[] opciones = {"Clientes", "Productos", "Inventario", "Salir"};
 
         while (true) {
             int opcion = JOptionPane.showOptionDialog(
@@ -67,13 +67,16 @@ public class Principal {
                     opciones[0]
             );
 
-            if (opcion == 0) {
+                       if (opcion == 0) {
                 new VentanaClientes(conexion).setVisible(true);
             } else if (opcion == 1) {
                 new VentanaProductos(conexion).setVisible(true);
+            } else if (opcion == 2) {
+                new VentanaInventario(conexion).setVisible(true);
             } else {
                 return;
             }
         }
     }
 }
+

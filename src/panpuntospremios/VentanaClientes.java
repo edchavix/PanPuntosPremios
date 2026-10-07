@@ -15,6 +15,7 @@ import javax.swing.JTextField;
 public class VentanaClientes extends JDialog {
 
     private final ClienteDAO clienteDAO;
+    private Cliente clienteSeleccionado;
 
     private final JTextField campoIdentificacion = new JTextField(20);
     private final JTextField campoNombre = new JTextField();
@@ -24,6 +25,7 @@ public class VentanaClientes extends JDialog {
     private final JTextField campoActivo = new JTextField();
 
     private final JButton botonRegistrar = new JButton("Registrar");
+    private final JButton botonModificar = new JButton("Modificar");
 
     public VentanaClientes(Connection conexion) {
         clienteDAO = new ClienteDAO(conexion);
@@ -59,7 +61,9 @@ public class VentanaClientes extends JDialog {
 
         campoPuntos.setEditable(false);
         campoActivo.setEditable(false);
-        habilitarRegistro(false);
+        habilitarDatos(false);
+        botonRegistrar.setEnabled(false);
+        botonModificar.setEnabled(false);
 
         JPanel botones = new JPanel();
         JButton botonNuevo = new JButton("Nuevo");
@@ -67,12 +71,14 @@ public class VentanaClientes extends JDialog {
 
         botones.add(botonNuevo);
         botones.add(botonRegistrar);
+        botones.add(botonModificar);
         botones.add(botonCerrar);
 
         botonBuscar.addActionListener(evento -> buscarCliente());
         campoIdentificacion.addActionListener(evento -> buscarCliente());
         botonNuevo.addActionListener(evento -> nuevoCliente());
         botonRegistrar.addActionListener(evento -> registrarCliente());
+        botonModificar.addActionListener(evento -> modificarCliente());
         botonCerrar.addActionListener(evento -> dispose());
 
         contenido.add(busqueda, BorderLayout.NORTH);
@@ -85,8 +91,11 @@ public class VentanaClientes extends JDialog {
     }
 
     private void buscarCliente() {
+        clienteSeleccionado = null;
         limpiarResultado();
-        habilitarRegistro(false);
+        habilitarDatos(false);
+        botonRegistrar.setEnabled(false);
+        botonModificar.setEnabled(false);
 
         try {
             Cliente cliente = clienteDAO.buscarPorIdentificacion(
@@ -101,7 +110,10 @@ public class VentanaClientes extends JDialog {
                 return;
             }
 
+            clienteSeleccionado = cliente;
             mostrarCliente(cliente);
+            habilitarDatos(true);
+            botonModificar.setEnabled(true);
 
         } catch (IllegalArgumentException error) {
             mostrarValidacion(error.getMessage());
@@ -111,9 +123,12 @@ public class VentanaClientes extends JDialog {
     }
 
     private void nuevoCliente() {
+        clienteSeleccionado = null;
         campoIdentificacion.setText("");
         limpiarResultado();
-        habilitarRegistro(true);
+        habilitarDatos(true);
+        botonRegistrar.setEnabled(true);
+        botonModificar.setEnabled(false);
         campoPuntos.setText("0");
         campoActivo.setText("Si");
         campoIdentificacion.requestFocusInWindow();
@@ -121,10 +136,10 @@ public class VentanaClientes extends JDialog {
 
     private void registrarCliente() {
         Cliente cliente = new Cliente(
-                campoIdentificacion.getText(),
-                campoNombre.getText(),
-                campoTelefono.getText(),
-                campoCorreo.getText()
+                campoIdentificacion.getText().trim(),
+                campoNombre.getText().trim(),
+                campoTelefono.getText().trim(),
+                campoCorreo.getText().trim()
         );
 
         try {
@@ -143,20 +158,63 @@ public class VentanaClientes extends JDialog {
             return;
         }
 
-        campoIdentificacion.setText(
-                campoIdentificacion.getText().trim()
-        );
-        campoNombre.setText(campoNombre.getText().trim());
-        campoTelefono.setText(campoTelefono.getText().trim());
-        campoCorreo.setText(campoCorreo.getText().trim());
-        campoPuntos.setText("0");
-        campoActivo.setText("Si");
-        habilitarRegistro(false);
+        clienteSeleccionado = null;
+        mostrarCliente(cliente);
+        habilitarDatos(false);
+        botonRegistrar.setEnabled(false);
+        botonModificar.setEnabled(false);
 
         JOptionPane.showMessageDialog(
                 this,
-                "Cliente registrado correctamente."
+                "Cliente registrado correctamente. "
+                + "Para modificarlo, pulsa Buscar."
         );
+    }
+
+    private void modificarCliente() {
+        if (clienteSeleccionado == null) {
+            mostrarValidacion("Primero busca un cliente.");
+            return;
+        }
+
+        String identificacion = campoIdentificacion.getText().trim();
+
+        if (!identificacion.equals(
+                clienteSeleccionado.getIdentificacion())) {
+            mostrarValidacion(
+                    "La identificacion cambio. Pulsa Buscar "
+                    + "para seleccionar el cliente correspondiente."
+            );
+            return;
+        }
+
+        Cliente actualizado = new Cliente(
+                clienteSeleccionado.getIdentificacion(),
+                campoNombre.getText().trim(),
+                campoTelefono.getText().trim(),
+                campoCorreo.getText().trim()
+        );
+
+        actualizado.setIdCliente(clienteSeleccionado.getIdCliente());
+        actualizado.setPuntos(clienteSeleccionado.getPuntos());
+        actualizado.setActivo(clienteSeleccionado.isActivo());
+
+        try {
+            clienteDAO.actualizar(actualizado);
+
+            clienteSeleccionado = actualizado;
+            mostrarCliente(actualizado);
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Datos del cliente actualizados correctamente."
+            );
+
+        } catch (IllegalArgumentException error) {
+            mostrarValidacion(error.getMessage());
+        } catch (SQLException error) {
+            mostrarError(error);
+        }
     }
 
     private void mostrarCliente(Cliente cliente) {
@@ -168,11 +226,10 @@ public class VentanaClientes extends JDialog {
         campoActivo.setText(cliente.isActivo() ? "Si" : "No");
     }
 
-    private void habilitarRegistro(boolean habilitado) {
+    private void habilitarDatos(boolean habilitado) {
         campoNombre.setEditable(habilitado);
         campoTelefono.setEditable(habilitado);
         campoCorreo.setEditable(habilitado);
-        botonRegistrar.setEnabled(habilitado);
     }
 
     private void limpiarResultado() {

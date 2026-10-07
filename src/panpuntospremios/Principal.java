@@ -1,8 +1,6 @@
 package panpuntospremios;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import javax.swing.JOptionPane;
@@ -12,10 +10,10 @@ import javax.swing.SwingUtilities;
 public class Principal {
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> probarConexion());
+        SwingUtilities.invokeLater(() -> iniciar());
     }
 
-    private static void probarConexion() {
+    private static void iniciar() {
         JPasswordField campoClave = new JPasswordField();
 
         int respuesta = JOptionPane.showConfirmDialog(
@@ -27,34 +25,26 @@ public class Principal {
         );
 
         if (respuesta != JOptionPane.OK_OPTION) {
+            campoClave.setText("");
             return;
         }
 
         char[] clave = campoClave.getPassword();
 
-        String consulta = "SELECT USER AS usuario, "
-                + "SYS_CONTEXT('USERENV', 'CON_NAME') AS base FROM dual";
+        try (Connection conexion =
+                ConexionBD.conectar(new String(clave))) {
 
-        try (
-                Connection conexion = ConexionBD.conectar(new String(clave));
-                PreparedStatement sentencia = conexion.prepareStatement(consulta);
-                ResultSet resultado = sentencia.executeQuery()
-        ) {
-            if (resultado.next()) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Conexión correcta con Oracle."
-                        + "\nUsuario: " + resultado.getString("usuario")
-                        + "\nBase: " + resultado.getString("base"),
-                        "Pan, Puntos y Premios",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-            }
+            Arrays.fill(clave, '\0');
+            campoClave.setText("");
+
+            VentanaClientes ventana = new VentanaClientes(conexion);
+            ventana.setVisible(true);
+
         } catch (SQLException error) {
             JOptionPane.showMessageDialog(
                     null,
-                    "No se pudo conectar:\n" + error.getMessage(),
-                    "Error de conexión",
+                    "Error de conexion:\n" + error.getMessage(),
+                    "Error",
                     JOptionPane.ERROR_MESSAGE
             );
         } finally {

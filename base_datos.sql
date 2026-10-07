@@ -293,3 +293,80 @@ WHERE table_name IN (
     'MOVIMIENTOS_INVENTARIO'
 )
 ORDER BY table_name;
+
+INSERT INTO productos (codigo, categoria, nombre, precio)
+VALUES ('SAN001', 'SANDWICH', 'Sandwich de pollo', 25.00);
+
+COMMIT;
+
+INSERT INTO productos (codigo, categoria, nombre, precio)
+VALUES ('BEB001', 'BEBIDA', 'Refresco', 8.00);
+
+INSERT INTO productos (codigo, categoria, nombre, precio)
+VALUES ('ACO001', 'ACOMPANAMIENTO', 'Papas fritas', 12.00);
+
+COMMIT;
+
+SELECT codigo, categoria, nombre, precio, stock
+FROM productos
+ORDER BY codigo;
+
+BEGIN
+    UPDATE productos
+    SET stock = stock + 20
+    WHERE codigo IN ('SAN001', 'BEB001', 'ACO001');
+
+    INSERT INTO movimientos_inventario (
+        id_producto, tipo, cantidad
+    )
+    SELECT id_producto, 'REPOSICION', 20
+    FROM productos
+    WHERE codigo IN ('SAN001', 'BEB001', 'ACO001');
+
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/
+
+SELECT codigo, categoria, nombre, precio, stock
+FROM productos
+ORDER BY codigo;
+
+INSERT INTO menus (
+    codigo, nombre,
+    id_sandwich, id_bebida, id_acompanamiento,
+    precio
+)
+VALUES (
+    'MEN001',
+    'Menu de pollo',
+    (SELECT id_producto FROM productos WHERE codigo = 'SAN001'),
+    (SELECT id_producto FROM productos WHERE codigo = 'BEB001'),
+    (SELECT id_producto FROM productos WHERE codigo = 'ACO001'),
+    40.00
+);
+
+COMMIT;
+
+SELECT m.codigo,
+       m.nombre,
+       s.nombre AS sandwich,
+       b.nombre AS bebida,
+       a.nombre AS acompanamiento,
+       m.precio
+FROM menus m
+JOIN productos s ON s.id_producto = m.id_sandwich
+JOIN productos b ON b.id_producto = m.id_bebida
+JOIN productos a ON a.id_producto = m.id_acompanamiento;
+
+INSERT INTO clientes (identificacion, nombre)
+VALUES ('PRUEBA001', 'Cliente de prueba');
+
+COMMIT;
+
+SELECT identificacion, nombre, puntos, activo
+FROM clientes
+WHERE identificacion = 'PRUEBA001';

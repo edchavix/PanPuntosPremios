@@ -393,9 +393,54 @@ WHERE id_pedido = 1
 ORDER BY id_detalle;
 
 
-SELECT codigo, stock
+SELECT codigo,  
 FROM productos
 WHERE codigo IN ('SAN001', 'BEB001', 'ACO001')
 ORDER BY codigo;
 
 
+SELECT p.id_pedido,
+       p.estado,
+       p.total,
+       p.puntos_ganados,
+       p.fecha_pago,
+       c.identificacion,
+       c.puntos AS saldo_cliente
+FROM pedidos p
+JOIN clientes c ON c.id_cliente = p.id_cliente
+WHERE p.id_pedido = 1;
+
+SELECT codigo, stock
+FROM productos
+WHERE codigo IN ('SAN001', 'BEB001', 'ACO001')
+ORDER BY codigo;
+
+SELECT identificacion, puntos
+FROM clientes
+WHERE identificacion = 'PRUEBA001';
+
+SELECT id_pedido, metodo, monto, efectivo_recibido, cambio
+FROM pagos
+WHERE id_pedido = 1;
+
+SELECT identificacion, puntos
+FROM clientes
+WHERE identificacion = 'PRUEBA001';
+
+SELECT COUNT(*) AS cantidad_pagos
+FROM pagos
+WHERE id_pedido = 1;
+
+SELECT p.id_pedido, p.estado, p.total, p.puntos_ganados,
+       pg.metodo, pg.referencia
+FROM pedidos p
+JOIN pagos pg ON pg.id_pedido = p.id_pedido
+WHERE p.id_pedido = 21;
+
+SELECT identificacion, puntos
+FROM clientes
+WHERE identificacion = 'PRUEBA001';
+
+SELECT codigo, stock
+FROM productos
+WHERE codigo = 'BEB002';

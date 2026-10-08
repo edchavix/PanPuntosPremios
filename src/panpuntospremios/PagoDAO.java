@@ -105,6 +105,98 @@ public class PagoDAO {
         conexion.setAutoCommit(true);
         return pago;
     }
+    
+        public PagoTarjeta cobrarTarjeta(
+            long idPedido, String referencia, boolean aprobado)
+            throws SQLException {
+
+        if (idPedido <= 0) {
+            throw new IllegalArgumentException(
+                    "Escribe un numero de pedido valido."
+            );
+        }
+
+        if (!conexion.getAutoCommit()) {
+            throw new SQLException(
+                    "Hay una operacion pendiente en la conexion."
+            );
+        }
+
+        conexion.setAutoCommit(false);
+
+        try {
+            long idCliente;
+            BigDecimal total;
+
+            String consultaPedido = "SELECT id_cliente, estado, total "
+                    + "FROM pedidos WHERE id_pedido = ? FOR UPDATE";
+
+            try (PreparedStatement sentencia =
+                    conexion.prepareStatement(consultaPedido)) {
+                sentencia.setLong(1, idPedido);
+
+                try (ResultSet resultado = sentencia.executeQuery()) {
+                    if (!resultado.next()) {
+                        throw new IllegalArgumentException(
+                                "No existe ese pedido."
+                        );
+                    }
+
+                    if (!"PENDIENTE".equals(
+                            resultado.getString("estado"))) {
+                        throw new IllegalArgumentException(
+                                "Solo se pueden cobrar pedidos pendientes."
+                        );
+                    }
+
+                    idCliente = resultado.getLong("id_cliente");
+                    total = resultado.getBigDecimal("total");
+                }
+            }
+
+            PagoTarjeta pago = new PagoTarjeta(
+                    total, referencia, aprobado
+            );
+
+            pago.exigirAprobacion();
+
+            long saldoActual = consultarCliente(idCliente);
+            Map<Long, Long> cantidades = new TreeMap<>();
+            long puntos = leerDetalles(idPedido, total, cantidades);
+
+            if (puntos > 9999999999L
+                    || saldoActual + puntos > 9999999999L) {
+                throw new IllegalArgumentException(
+                        "El saldo de puntos supera el limite permitido."
+                );
+            }
+
+            descontarInventario(idPedido, cantidades);
+            registrarPagoTarjeta(idPedido, pago);
+            acreditarPuntos(idCliente, puntos);
+            marcarPagado(idPedido, puntos);
+
+            conexion.commit();
+            conexion.setAutoCommit(true);
+            return pago;
+
+        } catch (SQLException | RuntimeException error) {
+            try {
+                conexion.rollback();
+            } catch (SQLException errorReversion) {
+                error.addSuppressed(errorReversion);
+            }
+
+            try {
+                conexion.setAutoCommit(true);
+            } catch (SQLException errorRestauracion) {
+                error.addSuppressed(errorRestauracion);
+            }
+
+            throw error;
+        }
+    }
+    
 
     private long consultarCliente(long idCliente) throws SQLException {
         String sql = "SELECT activo, puntos FROM clientes "
@@ -314,6 +406,23 @@ public class PagoDAO {
             sentencia.executeUpdate();
         }
     }
+    
+        private void registrarPagoTarjeta(
+            long idPedido, PagoTarjeta pago) throws SQLException {
+
+        String sql = "INSERT INTO pagos "
+                + "(id_pedido, metodo, monto, referencia) "
+                + "VALUES (?, 'TARJETA', ?, ?)";
+
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setLong(1, idPedido);
+            sentencia.setBigDecimal(2, pago.getMonto());
+            sentencia.setString(3, pago.getReferencia());
+            sentencia.executeUpdate();
+        }
+    }
+    
+    
 
     private void acreditarPuntos(long idCliente, long puntos)
             throws SQLException {

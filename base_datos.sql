@@ -380,3 +380,22 @@ FROM movimientos_inventario m
 JOIN productos p ON p.id_producto = m.id_producto
 WHERE p.codigo = 'BEB002'
 ORDER BY m.fecha_movimiento DESC, m.id_movimiento DESC;
+
+SELECT id_pedido, estado, total, puntos_ganados, fecha_pago
+FROM pedidos
+WHERE id_pedido = 1;
+
+SELECT id_producto, id_menu, cantidad, precio_unitario,
+       cantidad * precio_unitario AS subtotal,
+       cantidad * puntos_unitarios AS puntos_posibles
+FROM detalle_pedido
+WHERE id_pedido = 1
+ORDER BY id_detalle;
+
+
+SELECT codigo, stock
+FROM productos
+WHERE codigo IN ('SAN001', 'BEB001', 'ACO001')
+ORDER BY codigo;
+
+

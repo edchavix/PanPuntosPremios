@@ -54,7 +54,8 @@ public class Principal {
 
     private static void mostrarMenu(Connection conexion) {
         String[] opciones = {
-            "Clientes", "Productos", "Inventario", "Pedidos", "Salir"
+            "Clientes", "Productos", "Inventario",
+            "Pedidos", "Pagos", "Salir"
         };
 
         while (true) {
@@ -77,6 +78,8 @@ public class Principal {
                 new VentanaInventario(conexion).setVisible(true);
             } else if (opcion == 3) {
                 new VentanaPedidos(conexion).setVisible(true);
+            } else if (opcion == 4) {
+                new VentanaPagos(conexion).setVisible(true);
             } else {
                 return;
             }

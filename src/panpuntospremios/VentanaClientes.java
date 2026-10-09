@@ -15,6 +15,7 @@ import javax.swing.JTextField;
 public class VentanaClientes extends JDialog {
 
     private final ClienteDAO clienteDAO;
+    private final Connection conexion;
     private Cliente clienteSeleccionado;
 
     private final JTextField campoIdentificacion = new JTextField(20);
@@ -26,8 +27,10 @@ public class VentanaClientes extends JDialog {
 
     private final JButton botonRegistrar = new JButton("Registrar");
     private final JButton botonModificar = new JButton("Modificar");
+    private final JButton botonHistorial = new JButton("Historial del cliente");
 
     public VentanaClientes(Connection conexion) {
+        this.conexion = conexion;
         clienteDAO = new ClienteDAO(conexion);
 
         setTitle("Pan, Puntos y Premios - Clientes");
@@ -64,6 +67,7 @@ public class VentanaClientes extends JDialog {
         habilitarDatos(false);
         botonRegistrar.setEnabled(false);
         botonModificar.setEnabled(false);
+        botonHistorial.setEnabled(false);
 
         JPanel botones = new JPanel();
         JButton botonNuevo = new JButton("Nuevo");
@@ -72,6 +76,7 @@ public class VentanaClientes extends JDialog {
         botones.add(botonNuevo);
         botones.add(botonRegistrar);
         botones.add(botonModificar);
+        botones.add(botonHistorial);
         botones.add(botonCerrar);
 
         botonBuscar.addActionListener(evento -> buscarCliente());
@@ -79,6 +84,7 @@ public class VentanaClientes extends JDialog {
         botonNuevo.addActionListener(evento -> nuevoCliente());
         botonRegistrar.addActionListener(evento -> registrarCliente());
         botonModificar.addActionListener(evento -> modificarCliente());
+        botonHistorial.addActionListener(evento -> mostrarHistorial());
         botonCerrar.addActionListener(evento -> dispose());
 
         contenido.add(busqueda, BorderLayout.NORTH);
@@ -96,6 +102,7 @@ public class VentanaClientes extends JDialog {
         habilitarDatos(false);
         botonRegistrar.setEnabled(false);
         botonModificar.setEnabled(false);
+        botonHistorial.setEnabled(false);
 
         try {
             Cliente cliente = clienteDAO.buscarPorIdentificacion(
@@ -114,6 +121,7 @@ public class VentanaClientes extends JDialog {
             mostrarCliente(cliente);
             habilitarDatos(true);
             botonModificar.setEnabled(true);
+            botonHistorial.setEnabled(true);
 
         } catch (IllegalArgumentException error) {
             mostrarValidacion(error.getMessage());
@@ -129,6 +137,7 @@ public class VentanaClientes extends JDialog {
         habilitarDatos(true);
         botonRegistrar.setEnabled(true);
         botonModificar.setEnabled(false);
+        botonHistorial.setEnabled(false);
         campoPuntos.setText("0");
         campoActivo.setText("Si");
         campoIdentificacion.requestFocusInWindow();
@@ -163,6 +172,7 @@ public class VentanaClientes extends JDialog {
         habilitarDatos(false);
         botonRegistrar.setEnabled(false);
         botonModificar.setEnabled(false);
+        botonHistorial.setEnabled(false);
 
         JOptionPane.showMessageDialog(
                 this,
@@ -215,6 +225,25 @@ public class VentanaClientes extends JDialog {
         } catch (SQLException error) {
             mostrarError(error);
         }
+    }
+
+    private void mostrarHistorial() {
+        if (clienteSeleccionado == null) {
+            mostrarValidacion("Primero busca un cliente.");
+            return;
+        }
+
+        if (!campoIdentificacion.getText().trim().equals(
+                clienteSeleccionado.getIdentificacion())) {
+            mostrarValidacion("Vuelve a buscar el cliente.");
+            return;
+        }
+
+        new VentanaHistorialCliente(
+                conexion,
+                clienteSeleccionado.getIdCliente(),
+                clienteSeleccionado.getNombre()
+        ).setVisible(true);
     }
 
     private void mostrarCliente(Cliente cliente) {

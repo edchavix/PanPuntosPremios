@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1080" viewBox="0 0 1600 1080">
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#49627a"/></marker>
+  <marker id="triangle" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto"><path d="M1,1 L13,7 L1,13 z" fill="#ffffff" stroke="#49627a" stroke-width="1.5"/></marker>
+  <style>
+    .bg{fill:#f5f8fb}.card{fill:#fff;stroke:#526a80;stroke-width:2;rx:12}.head{fill:#dce9f5}.line{stroke:#49627a;stroke-width:2;fill:none}.dash{stroke-dasharray:8 6}.title{font:700 30px Arial;fill:#18334b}.subtitle{font:16px Arial;fill:#40586c}.name{font:700 21px Arial;fill:#18334b}.body{font:16px Consolas,monospace;fill:#243746}.rel{font:15px Arial;fill:#284b67}.section{font:700 18px Arial;fill:#18334b}.small{font:15px Arial;fill:#40586c}
+  </style>
+</defs>
+<rect class="bg" width="1600" height="1080"/>
+<text class="title" x="55" y="52">Pan, Puntos y Premios — Diagrama de clases UML</text>
+<text class="subtitle" x="55" y="82">Modelo del pedido, herencia, polimorfismo, composición y capas de acceso a datos</text>
+
+<path class="line" marker-end="url(#arrow)" d="M385 180 H500"/><text class="rel" x="414" y="166">realiza</text>
+<path class="line" d="M860 190 H1010"/><path class="line" marker-end="url(#arrow)" d="M1010 190 H1040"/><text class="rel" x="884" y="176">contiene 1..*</text>
+<path class="line" marker-end="url(#arrow)" d="M1255 280 V405 H1000"/><text class="rel" x="1268" y="340">usa 1</text>
+<path class="line" marker-end="url(#triangle)" d="M300 740 V675 H700 V590"/>
+<path class="line" marker-end="url(#triangle)" d="M1300 740 V675 H900 V590"/>
+<text class="rel" x="545" y="658">herencia</text>
+<path class="line" d="M1300 940 V985 H520 V920"/><text class="rel" x="837" y="978">contiene sandwich, bebida y acompañamiento</text>
+
+<g transform="translate(55 115)"><rect class="card" width="330" height="185"/><path class="head" d="M12 0 H318 Q330 0 330 12 V48 H0 V12 Q0 0 12 0"/><text class="name" x="18" y="32">Cliente</text><text class="body" x="18" y="78">- idCliente: long</text><text class="body" x="18" y="104">- identificacion: String</text><text class="body" x="18" y="130">- nombre: String</text><text class="body" x="18" y="156">- puntos: long</text><text class="body" x="18" y="178">- activo: boolean</text></g>
+<g transform="translate(500 115)"><rect class="card" width="360" height="205"/><path class="head" d="M12 0 H348 Q360 0 360 12 V48 H0 V12 Q0 0 12 0"/><text class="name" x="18" y="32">Pedido</text><text class="body" x="18" y="78">- cliente: Cliente</text><text class="body" x="18" y="104">- detalles: ArrayList&lt;DetallePedido&gt;</text><text class="body" x="18" y="145">+ agregarArticulo(ItemVenta, int)</text><text class="body" x="18" y="171">+ calcularTotal(): BigDecimal</text><text class="body" x="18" y="197">+ calcularPuntos(): long</text></g>
+<g transform="translate(1040 115)"><rect class="card" width="430" height="165"/><path class="head" d="M12 0 H418 Q430 0 430 12 V48 H0 V12 Q0 0 12 0"/><text class="name" x="18" y="32">DetallePedido</text><text class="body" x="18" y="82">- articulo: ItemVenta</text><text class="body" x="18" y="110">- cantidad: int</text><text class="body" x="18" y="138">+ calcularSubtotal(): BigDecimal</text><text class="body" x="18" y="160">+ calcularPuntos(): long</text></g>
+<g transform="translate(600 405)"><rect class="card" width="400" height="185"/><path class="head" d="M12 0 H388 Q400 0 400 12 V48 H0 V12 Q0 0 12 0"/><text class="name" x="18" y="31">ItemVenta «abstract»</text><text class="body" x="18" y="78">- id, codigo, nombre, precio</text><text class="body" x="18" y="116">+ calcularPuntos(): int «abstract»</text><text class="small" x="18" y="157">Base común de productos y menús</text></g>
+<g transform="translate(100 740)"><rect class="card" width="400" height="180"/><path class="head" d="M12 0 H388 Q400 0 400 12 V48 H0 V12 Q0 0 12 0"/><text class="name" x="18" y="32">ProductoIndividual</text><text class="body" x="18" y="82">- categoria: String</text><text class="body" x="18" y="114">+ calcularPuntos(): int</text><text class="small" x="18" y="153">Sándwich: 2; bebida/acompañamiento: 0</text></g>
+<g transform="translate(1100 740)"><rect class="card" width="400" height="200"/><path class="head" d="M12 0 H388 Q400 0 400 12 V48 H0 V12 Q0 0 12 0"/><text class="name" x="18" y="32">MenuCompleto</text><text class="body" x="18" y="82">- sandwich: ProductoIndividual</text><text class="body" x="18" y="110">- bebida: ProductoIndividual</text><text class="body" x="18" y="138">- acompanamiento: ProductoIndividual</text><text class="body" x="18" y="174">+ calcularPuntos(): int = 8</text></g>
+
+<rect x="55" y="1000" width="1415" height="55" rx="10" fill="#e9f0f6" stroke="#9aafc2"/>
+<text class="section" x="75" y="1034">Ventanas usan DAOs: ClienteDAO, ProductoDAO, PedidoDAO, PagoDAO, CanjeDAO, InventarioDAO y ReporteDAO. Las operaciones de Oracle usan PreparedStatement.</text>
+</svg>

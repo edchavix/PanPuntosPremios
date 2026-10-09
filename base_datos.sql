@@ -14,7 +14,6 @@ CREATE TABLE clientes
     CONSTRAINT ck_clientes_puntos CHECK (puntos >= 0),
     CONSTRAINT ck_clientes_activo CHECK (activo IN ('S', 'N'))
 ); 
-SELECT * FROM clientes;
 
 CREATE TABLE productos (
     id_producto NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -75,7 +74,7 @@ CREATE TABLE pedidos (
         REFERENCES clientes (id_cliente),
     CONSTRAINT ck_pedidos_estado
         CHECK (estado IN (
-            'PENDIENTE', 'PAGADO', 'ENTREGADO', 'CANCELADO'
+            'PENDIENTE', 'PAGADO', 'ENTREGADO', 'ANULADO'
         )),
     CONSTRAINT ck_pedidos_total CHECK (total >= 0),
     CONSTRAINT ck_pedidos_puntos CHECK (puntos_ganados >= 0)
@@ -146,7 +145,6 @@ CREATE TABLE pagos (
         )
     )
 );
-SELECT * FROM pagos;
 
 CREATE TABLE recompensas (
     id_recompensa NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -177,7 +175,6 @@ INSERT INTO recompensas (nombre, categoria, puntos_requeridos)
 VALUES ('Menu gratis', 'MENU', 50);
 
 COMMIT;
-SELECT nombre, categoria, puntos_requeridos FROM recompensas;
 
 CREATE TABLE canjes (
     id_canje NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -244,203 +241,42 @@ CREATE TABLE movimientos_inventario (
     )
 );
 
-CREATE TABLE movimientos_inventario (
-    id_movimiento NUMBER GENERATED ALWAYS AS IDENTITY,
-    id_producto NUMBER NOT NULL,
-    fecha_movimiento TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
-    tipo VARCHAR2(15) NOT NULL,
-    cantidad NUMBER(10) NOT NULL,
-    id_pedido NUMBER,
-    id_canje NUMBER,
+INSERT INTO productos (codigo, categoria, nombre, precio, stock)
+VALUES ('SAN001', 'SANDWICH', 'Sandwich de pollo', 25.00, 20);
 
-    CONSTRAINT pk_movimientos_inv PRIMARY KEY (id_movimiento),
-    CONSTRAINT fk_mov_inv_producto
-        FOREIGN KEY (id_producto)
-        REFERENCES productos (id_producto),
-    CONSTRAINT fk_mov_inv_pedido
-        FOREIGN KEY (id_pedido)
-        REFERENCES pedidos (id_pedido),
-    CONSTRAINT fk_mov_inv_canje
-        FOREIGN KEY (id_canje)
-        REFERENCES canjes (id_canje),
-    CONSTRAINT ck_mov_inv_cantidad CHECK (cantidad > 0),
-    CONSTRAINT ck_mov_inv_tipo CHECK (
-        tipo IN ('REPOSICION', 'VENTA', 'CANJE')
-    ),
-    CONSTRAINT ck_mov_inv_origen CHECK (
-        (tipo = 'REPOSICION'
-            AND id_pedido IS NULL AND id_canje IS NULL)
-        OR
-        (tipo = 'VENTA'
-            AND id_pedido IS NOT NULL AND id_canje IS NULL)
-        OR
-        (tipo = 'CANJE'
-            AND id_canje IS NOT NULL AND id_pedido IS NULL)
-    )
-);
+INSERT INTO productos (codigo, categoria, nombre, precio, stock)
+VALUES ('BEB001', 'BEBIDA', 'Refresco', 8.00, 20);
 
-SELECT table_name
-FROM user_tables
-WHERE table_name IN (
-    'CLIENTES',
-    'PRODUCTOS',
-    'MENUS',
-    'PEDIDOS',
-    'DETALLE_PEDIDO',
-    'PAGOS',
-    'RECOMPENSAS',
-    'CANJES',
-    'MOVIMIENTOS_INVENTARIO'
-)
-ORDER BY table_name;
+INSERT INTO productos (codigo, categoria, nombre, precio, stock)
+VALUES ('BEB002', 'BEBIDA', 'Agua pura 600 ml', 6.00, 10);
 
-INSERT INTO productos (codigo, categoria, nombre, precio)
-VALUES ('SAN001', 'SANDWICH', 'Sandwich de pollo', 25.00);
+INSERT INTO productos (codigo, categoria, nombre, precio, stock)
+VALUES ('ACO001', 'ACOMPANAMIENTO', 'Papas fritas', 12.00, 20);
 
-COMMIT;
+INSERT INTO movimientos_inventario (id_producto, tipo, cantidad)
+VALUES ((SELECT id_producto FROM productos WHERE codigo = 'SAN001'), 'REPOSICION', 20);
 
-INSERT INTO productos (codigo, categoria, nombre, precio)
-VALUES ('BEB001', 'BEBIDA', 'Refresco', 8.00);
+INSERT INTO movimientos_inventario (id_producto, tipo, cantidad)
+VALUES ((SELECT id_producto FROM productos WHERE codigo = 'BEB001'), 'REPOSICION', 20);
 
-INSERT INTO productos (codigo, categoria, nombre, precio)
-VALUES ('ACO001', 'ACOMPANAMIENTO', 'Papas fritas', 12.00);
+INSERT INTO movimientos_inventario (id_producto, tipo, cantidad)
+VALUES ((SELECT id_producto FROM productos WHERE codigo = 'BEB002'), 'REPOSICION', 10);
 
-COMMIT;
-
-SELECT codigo, categoria, nombre, precio, stock
-FROM productos
-ORDER BY codigo;
-
-BEGIN
-    UPDATE productos
-    SET stock = stock + 20
-    WHERE codigo IN ('SAN001', 'BEB001', 'ACO001');
-
-    INSERT INTO movimientos_inventario (
-        id_producto, tipo, cantidad
-    )
-    SELECT id_producto, 'REPOSICION', 20
-    FROM productos
-    WHERE codigo IN ('SAN001', 'BEB001', 'ACO001');
-
-    COMMIT;
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
-END;
-/
-
-SELECT codigo, categoria, nombre, precio, stock
-FROM productos
-ORDER BY codigo;
+INSERT INTO movimientos_inventario (id_producto, tipo, cantidad)
+VALUES ((SELECT id_producto FROM productos WHERE codigo = 'ACO001'), 'REPOSICION', 20);
 
 INSERT INTO menus (
-    codigo, nombre,
-    id_sandwich, id_bebida, id_acompanamiento,
-    precio
+    codigo, nombre, id_sandwich, id_bebida, id_acompanamiento, precio
 )
 VALUES (
-    'MEN001',
-    'Menu de pollo',
+    'MEN001', 'Menu de pollo',
     (SELECT id_producto FROM productos WHERE codigo = 'SAN001'),
     (SELECT id_producto FROM productos WHERE codigo = 'BEB001'),
     (SELECT id_producto FROM productos WHERE codigo = 'ACO001'),
     40.00
 );
 
-COMMIT;
-
-SELECT m.codigo,
-       m.nombre,
-       s.nombre AS sandwich,
-       b.nombre AS bebida,
-       a.nombre AS acompanamiento,
-       m.precio
-FROM menus m
-JOIN productos s ON s.id_producto = m.id_sandwich
-JOIN productos b ON b.id_producto = m.id_bebida
-JOIN productos a ON a.id_producto = m.id_acompanamiento;
-
 INSERT INTO clientes (identificacion, nombre)
 VALUES ('PRUEBA001', 'Cliente de prueba');
 
 COMMIT;
-
-SELECT identificacion, nombre, puntos, activo
-FROM clientes
-WHERE identificacion = 'PRUEBA001';
-
-SELECT p.codigo,
-       p.nombre,
-       m.fecha_movimiento,
-       m.tipo,
-       m.cantidad
-FROM movimientos_inventario m
-JOIN productos p ON p.id_producto = m.id_producto
-WHERE p.codigo = 'BEB002'
-ORDER BY m.fecha_movimiento DESC, m.id_movimiento DESC;
-
-SELECT id_pedido, estado, total, puntos_ganados, fecha_pago
-FROM pedidos
-WHERE id_pedido = 1;
-
-SELECT id_producto, id_menu, cantidad, precio_unitario,
-       cantidad * precio_unitario AS subtotal,
-       cantidad * puntos_unitarios AS puntos_posibles
-FROM detalle_pedido
-WHERE id_pedido = 1
-ORDER BY id_detalle;
-
-
-SELECT codigo,  
-FROM productos
-WHERE codigo IN ('SAN001', 'BEB001', 'ACO001')
-ORDER BY codigo;
-
-
-SELECT p.id_pedido,
-       p.estado,
-       p.total,
-       p.puntos_ganados,
-       p.fecha_pago,
-       c.identificacion,
-       c.puntos AS saldo_cliente
-FROM pedidos p
-JOIN clientes c ON c.id_cliente = p.id_cliente
-WHERE p.id_pedido = 1;
-
-SELECT codigo, stock
-FROM productos
-WHERE codigo IN ('SAN001', 'BEB001', 'ACO001')
-ORDER BY codigo;
-
-SELECT identificacion, puntos
-FROM clientes
-WHERE identificacion = 'PRUEBA001';
-
-SELECT id_pedido, metodo, monto, efectivo_recibido, cambio
-FROM pagos
-WHERE id_pedido = 1;
-
-SELECT identificacion, puntos
-FROM clientes
-WHERE identificacion = 'PRUEBA001';
-
-SELECT COUNT(*) AS cantidad_pagos
-FROM pagos
-WHERE id_pedido = 1;
-
-SELECT p.id_pedido, p.estado, p.total, p.puntos_ganados,
-       pg.metodo, pg.referencia
-FROM pedidos p
-JOIN pagos pg ON pg.id_pedido = p.id_pedido
-WHERE p.id_pedido = 21;
-
-SELECT identificacion, puntos
-FROM clientes
-WHERE identificacion = 'PRUEBA001';
-
-SELECT codigo, stock
-FROM productos
-WHERE codigo = 'BEB002';

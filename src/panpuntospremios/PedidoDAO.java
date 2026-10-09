@@ -128,6 +128,59 @@ public class PedidoDAO {
         return idPedido;
     }
 
+    public String consultarEstado(long idPedido) throws SQLException {
+        validarIdPedido(idPedido);
+
+        String sql = "SELECT estado FROM pedidos WHERE id_pedido = ?";
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setLong(1, idPedido);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                return resultado.next() ? resultado.getString("estado") : null;
+            }
+        }
+    }
+
+    public void marcarEntregado(long idPedido) throws SQLException {
+        validarIdPedido(idPedido);
+
+        String sql = "UPDATE pedidos SET estado = 'ENTREGADO', "
+                + "fecha_entrega = SYSTIMESTAMP "
+                + "WHERE id_pedido = ? AND estado = 'PAGADO'";
+
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setLong(1, idPedido);
+            if (sentencia.executeUpdate() != 1) {
+                throw new IllegalArgumentException(
+                        "Solo se puede entregar un pedido pagado."
+                );
+            }
+        }
+    }
+
+    public void anularPendiente(long idPedido) throws SQLException {
+        validarIdPedido(idPedido);
+
+        String sql = "UPDATE pedidos SET estado = 'ANULADO' "
+                + "WHERE id_pedido = ? AND estado = 'PENDIENTE'";
+
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+            sentencia.setLong(1, idPedido);
+            if (sentencia.executeUpdate() != 1) {
+                throw new IllegalArgumentException(
+                        "Solo se puede anular un pedido pendiente."
+                );
+            }
+        }
+    }
+
+    private void validarIdPedido(long idPedido) {
+        if (idPedido <= 0) {
+            throw new IllegalArgumentException(
+                    "El numero de pedido debe ser positivo."
+            );
+        }
+    }
+
     private void validarCliente(long idCliente) throws SQLException {
         String sql = "SELECT activo FROM clientes "
                 + "WHERE id_cliente = ? FOR UPDATE";

@@ -55,7 +55,8 @@ public class Principal {
     private static void mostrarMenu(Connection conexion) {
         String[] opciones = {
             "Clientes", "Productos", "Inventario",
-            "Pedidos", "Pagos", "Salir"
+            "Pedidos", "Pagos", "Canjes", "Reportes",
+            "Estados de pedidos", "Salir"
         };
 
         while (true) {
@@ -80,6 +81,12 @@ public class Principal {
                 new VentanaPedidos(conexion).setVisible(true);
             } else if (opcion == 4) {
                 new VentanaPagos(conexion).setVisible(true);
+            } else if (opcion == 5) {
+                new VentanaCanjes(conexion).setVisible(true);
+            } else if (opcion == 6) {
+                new VentanaReportes(conexion).setVisible(true);
+            } else if (opcion == 7) {
+                new VentanaEstadosPedidos(conexion).setVisible(true);
             } else {
                 return;
             }
